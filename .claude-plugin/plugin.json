@@ -1,0 +1,19 @@
+{
+  "name": "kalshi-trader",
+  "version": "1.0.0",
+  "description": "AI-assisted research and trading workflow for Kalshi prediction markets. Includes commands for opportunity scanning, deep research, critical analysis, scoring, and position management.",
+  "author": {
+    "name": "austron24"
+  },
+  "homepage": "https://github.com/austron24/kalshi-trader-plugin",
+  "repository": "https://github.com/austron24/kalshi-trader-plugin",
+  "license": "MIT",
+  "keywords": [
+    "trading",
+    "kalshi",
+    "prediction-markets",
+    "research",
+    "ai-trading",
+    "claude-code"
+  ]
+}
