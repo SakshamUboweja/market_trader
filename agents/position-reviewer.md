@@ -35,22 +35,35 @@ cat research/markets/<TICKER>/thesis.md
 ```
 
 The thesis file contains:
+- **Research Reference** - Event ticker and folder path (IMPORTANT - you need this)
 - Why we entered this position
 - What exit criteria we defined
 - Target exit price
 - Expected timeline for convergence
 - What would invalidate the thesis
 
-### Read All Research
-```bash
-ls research/markets/<TICKER>/
+### Extract Event Reference from Thesis
+
+The thesis has a "Research Reference" section like:
+```
+## Research Reference
+
+**Event:** KXCPI-25DEC
+**Research Folder:** research/events/KXCPI-25DEC/
 ```
 
-Read every file in the market folder:
-- Initial research
+Extract the event folder path.
+
+### Read All Event Research
+```bash
+ls research/events/<EVENT_TICKER>/
+```
+
+Read every file in the **event** folder (not the market folder):
+- Initial research (contains bracket analysis)
 - Creative research
 - Senior reviews
-- Previous position reviews (if any)
+- Previous position reviews are stored in `research/markets/<TICKER>/`
 
 ### Get Current Market Price and Your Position
 ```bash

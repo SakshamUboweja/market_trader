@@ -1,36 +1,36 @@
 ---
-description: Score all researched markets and return top opportunities ranked by quality
+description: Score all researched events and return top opportunities ranked by quality
 allowed-tools: Bash, Read, Write, Glob, Grep, Task
 model: opus
 ---
 
-# Market Scoring & Ranking
+# Event Scoring & Ranking
 
-You are scoring all researched markets to identify the top opportunities. Your job is to:
-1. Spawn parallel judge agents to score each market
+You are scoring all researched events to identify the top opportunities. Your job is to:
+1. Spawn parallel judge agents to score each event
 2. Collect all scores via bash
 3. Rank and return the top 10 opportunities
-4. Advise the user to take top markets to a fresh session
+4. Advise the user to take top events to a fresh session for /finalize
 
-## Phase 1: Identify Markets to Score
+## Phase 1: Identify Events to Score
 
-List all markets with research:
+List all events with research:
 
 ```bash
-ls research/markets/
+ls research/events/
 ```
 
-Each folder is a market ticker that needs scoring.
+Each folder is an event ticker that needs scoring.
 
-**Guard: If no markets found:**
+**Guard: If no events found:**
 ```markdown
-No research found in `research/markets/`. Run `/alpha` first to scan for opportunities and generate initial research.
+No research found in `research/events/`. Run `/alpha` first to scan for opportunities and generate initial research.
 ```
-Exit the command if no markets exist.
+Exit the command if no events exist.
 
 ## Phase 2: Spawn Judge Agents
 
-For each market, spawn a judge agent using the Task tool.
+For each event, spawn a judge agent using the Task tool.
 
 **CRITICAL: Parallel Blocking Execution**
 
@@ -48,23 +48,23 @@ For each agent:
 Example prompt for each agent:
 
 ```
-Score Kalshi market [TICKER].
+Score Kalshi event [EVENT_TICKER].
 
-**CRITICAL: Read ALL files in research/markets/[TICKER]/ completely. No skimming.**
+**CRITICAL: Read ALL files in research/events/[EVENT_TICKER]/ completely. No skimming.**
 
 Your job:
-1. Read every research file for this market completely
+1. Read every research file for this event completely
 2. Score the opportunity from 0-100 based on:
-   - Edge Quality (0-40): How clear and realistic is the edge?
+   - Edge Quality (0-40): How clear and realistic is the edge on the recommended bracket?
    - Research Quality (0-30): How thorough and credible?
-   - Actionability (0-30): Is this tradeable? Did senior analyst recommend TRADE?
+   - Actionability (0-30): Is this tradeable? Did senior analyst recommend TRADE with a specific bracket?
 
-3. Write score to: research/markets/[TICKER]/score.txt
+3. Write score to: research/events/[EVENT_TICKER]/score.txt
 
 **FORMAT IS CRITICAL:**
-<SCORE>|<ONE_LINE_RATIONALE>
+<SCORE>|<RECOMMENDED_TICKER>|<ONE_LINE_RATIONALE>
 
-Example: `87|Strong edge on Fed decision, solid research, senior analyst recommends TRADE`
+Example: `87|KXCPI-25DEC-T0.3|Strong edge on CPI, solid research, senior analyst recommends TRADE YES`
 
 When done, confirm: files read, score assigned, score file path.
 ```
@@ -72,9 +72,9 @@ When done, confirm: files read, score assigned, score file path.
 Example (spawn all agents in a single message):
 ```
 In a single message, invoke:
-- Task(subagent_type="judge", prompt="Score Kalshi market TICKER1...")
-- Task(subagent_type="judge", prompt="Score Kalshi market TICKER2...")
-- Task(subagent_type="judge", prompt="Score Kalshi market TICKER3...")
+- Task(subagent_type="judge", prompt="Score Kalshi event KXCPI-25DEC...")
+- Task(subagent_type="judge", prompt="Score Kalshi event KXFED-26JAN...")
+- Task(subagent_type="judge", prompt="Score Kalshi event KXGDP-26JAN30...")
 ```
 
 All agents run concurrently, and the main agent waits until ALL complete before proceeding.
@@ -84,25 +84,26 @@ All agents run concurrently, and the main agent waits until ALL complete before 
 Once all judges are done, run this bash script to collect and rank:
 
 ```bash
-echo "=== MARKET RANKINGS ===" && \
+echo "=== EVENT RANKINGS ===" && \
 errors="" && \
-for dir in research/markets/*/; do
-  ticker=$(basename "$dir")
+for dir in research/events/*/; do
+  event=$(basename "$dir")
   if [ -f "${dir}score.txt" ]; then
     score_line=$(cat "${dir}score.txt")
     score=$(echo "$score_line" | cut -d'|' -f1)
     # Validate score is a number 0-100
     if ! [[ "$score" =~ ^[0-9]+$ ]] || [ "$score" -lt 0 ] || [ "$score" -gt 100 ]; then
-      errors="${errors}INVALID: ${ticker} - malformed score '${score}'\n"
+      errors="${errors}INVALID: ${event} - malformed score '${score}'\n"
       continue
     fi
-    rationale=$(echo "$score_line" | cut -d'|' -f2-)
+    ticker=$(echo "$score_line" | cut -d'|' -f2)
+    rationale=$(echo "$score_line" | cut -d'|' -f3-)
     if [ -z "$rationale" ]; then
-      errors="${errors}WARNING: ${ticker} - missing rationale\n"
+      errors="${errors}WARNING: ${event} - missing rationale\n"
     fi
-    echo "${score}|${ticker}|${rationale}"
+    echo "${score}|${event}|${ticker}|${rationale}"
   else
-    errors="${errors}MISSING: ${ticker} - no score.txt file\n"
+    errors="${errors}MISSING: ${event} - no score.txt file\n"
   fi
 done | sort -t'|' -k1 -rn
 # Report any errors
@@ -113,55 +114,51 @@ if [ -n "$errors" ]; then
 fi
 ```
 
-This outputs all markets sorted by score (highest first), plus reports any validation errors.
+This outputs all events sorted by score (highest first), including the recommended ticker for each, plus reports any validation errors.
 
 ## Phase 4: Report Top Opportunities
 
 Parse the sorted output and present the top 10:
 
 ```markdown
-# Market Rankings Complete
+# Event Rankings Complete
 
-**Total Markets Scored:** [X]
+**Total Events Scored:** [X]
 **Time:** [timestamp]
 
 ## Top 10 Opportunities
 
-| Rank | Score | Ticker | Rationale |
-|------|-------|--------|-----------|
-| 1 | 87 | TICKER1 | Strong edge on Fed decision... |
-| 2 | 82 | TICKER2 | Good creative research found... |
-| 3 | 78 | TICKER3 | ... |
+| Rank | Score | Event | Recommended Ticker | Rationale |
+|------|-------|-------|-------------------|-----------|
+| 1 | 87 | KXCPI-25DEC | KXCPI-25DEC-T0.3 | Strong edge on CPI, recommends YES |
+| 2 | 82 | KXFED-26JAN | KXFED-26JAN-T5.0 | Good research, recommends NO |
+| 3 | 78 | KXGDP-26JAN30 | KXGDP-26JAN30-T2.5 | ... |
 ...
 
 ## Research Locations
 
 For the top 10, here are the full research folders:
 
-1. **TICKER1** (Score: 87): `research/markets/TICKER1/`
-2. **TICKER2** (Score: 82): `research/markets/TICKER2/`
+1. **KXCPI-25DEC** (Score: 87): `research/events/KXCPI-25DEC/`
+   - Recommended trade: KXCPI-25DEC-T0.3 YES
+2. **KXFED-26JAN** (Score: 82): `research/events/KXFED-26JAN/`
+   - Recommended trade: KXFED-26JAN-T5.0 NO
 ...
 
 ## Next Steps
 
-**IMPORTANT:** These top opportunities should be reviewed in a fresh session with full context.
-
-To proceed:
-1. Clear this session (the research is saved to disk)
-2. Start a new session
-3. Ask Claude to review these specific markets:
+**Run `/finalize` to get final trade recommendations and execute.**
 
 ```
-Review the top trading opportunities:
-- TICKER1 (research/markets/TICKER1/)
-- TICKER2 (research/markets/TICKER2/)
-- TICKER3 (research/markets/TICKER3/)
-...
-
-Read all research files for each and provide final trade recommendations.
+/finalize
 ```
 
-This ensures each market gets full attention without context limitations.
+Or specify top events explicitly:
+```
+/finalize KXCPI-25DEC KXFED-26JAN
+```
+
+This reads all research and presents specific trade recommendations with sizing.
 
 ## Full Rankings
 
@@ -170,7 +167,8 @@ This ensures each market gets full attention without context limitations.
 
 ## Notes
 
-- Score files are simple `SCORE|RATIONALE` format for easy bash parsing
+- Score files are `SCORE|TICKER|RATIONALE` format for easy bash parsing
 - Judge agents read ALL research (initial, creative, senior review) before scoring
+- **Each score includes the specific ticker to trade** (not just the event)
 - Top 10 is a guideline - user can adjust based on their risk appetite
-- Fresh session recommendation is critical - don't try to deeply analyze 10 markets in this context
+- Run `/finalize` next to execute trades

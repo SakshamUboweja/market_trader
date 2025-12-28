@@ -15,49 +15,53 @@ This is the most critical step in the entire workflow. The user is about to move
 ## Your Role
 
 You are the user-facing investment analyst. Your job is to:
-1. Read ALL research for the top markets completely (in YOUR context, not subagents)
+1. Read ALL research for the top EVENTS completely (in YOUR context, not subagents)
 2. Check the user's current portfolio and cash
-3. Recommend specific positions with sizing
+3. Recommend specific positions with sizing (using the recommended bracket/ticker from research)
 4. Explain each recommendation in plain language
 5. Wait for user approval
 6. Execute approved trades via kalshi CLI
 
-## Phase 1: Identify Top Markets
+## Phase 1: Identify Top Events
 
-First, check what markets to analyze. Either:
+First, check what events to analyze. Either:
 
 **From /score output in conversation:**
-Look at previous messages for the ranked list from `/score`.
+Look at previous messages for the ranked list from `/score`. Each score includes the recommended ticker.
 
 **Or from score files:**
 ```bash
-for dir in research/markets/*/; do
-  ticker=$(basename "$dir")
+for dir in research/events/*/; do
+  event=$(basename "$dir")
   if [ -f "${dir}score.txt" ]; then
-    score=$(cat "${dir}score.txt" | cut -d'|' -f1)
-    echo "${score}|${ticker}"
+    score_line=$(cat "${dir}score.txt")
+    score=$(echo "$score_line" | cut -d'|' -f1)
+    ticker=$(echo "$score_line" | cut -d'|' -f2)
+    echo "${score}|${event}|${ticker}"
   fi
 done | sort -t'|' -k1 -rn | head -10
 ```
 
-$ARGUMENTS may specify which markets to analyze (e.g., "TICKER1 TICKER2 TICKER3").
+$ARGUMENTS may specify which events to analyze (e.g., "KXCPI-25DEC KXFED-26JAN").
 
 ## Phase 2: Read ALL Research Completely
 
-**CRITICAL: You must read every research file for each market. Not summaries. Not excerpts. The full files.**
+**CRITICAL: You must read every research file for each event. Not summaries. Not excerpts. The full files.**
 
-For each top market:
+For each top event:
 ```bash
-ls research/markets/<TICKER>/
+ls research/events/<EVENT_TICKER>/
 ```
 
 Then use the Read tool to read EVERY file in that folder completely:
-- initial-research.md
+- initial-research.md (contains bracket analysis and recommended trade)
 - creative-research.md (if exists)
 - senior-review.md (if exists)
 - Any other research files
 
-**Do not proceed until you have read all files for all markets in your context.**
+**The initial research includes a "Recommended Trade" section with the specific bracket/ticker to trade.**
+
+**Do not proceed until you have read all files for all events in your context.**
 
 ## Phase 3: Check Portfolio Status
 
@@ -308,11 +312,23 @@ This is essential for the `/positions` command to properly manage the position l
 
 For each executed trade, create: `research/markets/<TICKER>/thesis.md`
 
+**IMPORTANT:** First create the folder:
+```bash
+mkdir -p research/markets/<TICKER>
+```
+
 ```markdown
 # Position Thesis - [Market Title]
 
 **Date Opened:** YYYY-MM-DD
 **Ticker:** <TICKER>
+
+## Research Reference
+
+**Event:** <EVENT_TICKER>
+**Research Folder:** research/events/<EVENT_TICKER>/
+**Bracket Selected:** [This specific bracket ticker]
+**Selection Rationale:** [Why this bracket was chosen over others]
 
 ## Position Details
 
@@ -328,7 +344,7 @@ For each executed trade, create: `research/markets/<TICKER>/thesis.md`
 
 ### Why We Entered This Position
 
-[2-3 paragraphs explaining the reasoning. This should be a synthesis of the research that led to this trade. Be specific about what edge we believe we have.]
+[2-3 paragraphs explaining the reasoning. This should be a synthesis of the event research that led to this trade. Be specific about what edge we believe we have on this specific bracket.]
 
 ### What The Market Is Missing
 
@@ -389,9 +405,15 @@ Consider selling if:
 ---
 *Thesis created at position entry by /finalize command*
 *This document is essential for /positions reviews*
+*Full event research is at: research/events/<EVENT_TICKER>/*
 ```
 
-**IMPORTANT:** The thesis document is what enables proper position management. Without it, the `/positions` command cannot evaluate whether to hold or sell. Take time to write a thoughtful thesis.
+**IMPORTANT:** The thesis document:
+1. Is stored at TICKER level: `research/markets/<TICKER>/thesis.md`
+2. References the EVENT research: `research/events/<EVENT>/`
+3. This separation allows position management to work correctly while research is at event level
+
+Without this thesis, the `/positions` command cannot evaluate whether to hold or sell. Take time to write a thoughtful thesis.
 
 ## Phase 8: Update State
 

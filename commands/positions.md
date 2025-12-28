@@ -78,13 +78,15 @@ Position Details:
 - Unrealized P&L: +/-$X.XX
 - Days held: X
 
-Research folder: research/markets/<TICKER>/
 Thesis file: research/markets/<TICKER>/thesis.md
+(The thesis contains a Research Reference section with the event folder path)
 
 Determine whether to HOLD or SELL this position.
 If SELL: document the outcome in learnings.
 Return your decision with reasoning.
 ```
+
+**NOTE:** The thesis file contains an event reference pointing to `research/events/<EVENT>/`. The position-reviewer should follow this reference to read the full event research.
 
 Example (spawn all position reviews in a single message):
 ```
