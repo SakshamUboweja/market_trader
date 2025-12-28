@@ -60,6 +60,7 @@ From the existing research, understand:
 Think creatively about:
 
 ### Unusual Data Sources
+- **Congressional trading data** - What are Congress members buying/selling? (see below)
 - Satellite imagery data (crop health, shipping traffic, construction)
 - Social media sentiment beyond mainstream (Reddit communities, Discord, forums)
 - Obscure government databases (local/state data, FOIA releases)
@@ -96,6 +97,43 @@ Pick 3-5 of your most promising unconventional angles and research them deeply:
 - Look at international coverage
 
 **Quality filter:** Only include findings from sources you'd be willing to bet on. Creative doesn't mean unreliable.
+
+### Congressional Trading Analysis
+
+**Always check congressional trading for political and economic events.** Use the `congress` CLI:
+
+```bash
+# For economic events (CPI, Fed, jobs):
+# Check if Congress is moving to safety or taking risks
+congress trades --days 30 --json | jq -r '.[].display_ticker' | sort | uniq -c | sort -rn | head -20
+congress trades --days 30 | grep -i "T-BILL"  # Flight to safety?
+
+# For company/sector-related events:
+# Check if relevant tickers are being traded
+congress ticker NVDA --days 90
+congress ticker GOOGL --days 90
+
+# For legislation/regulatory events:
+# Check if committee members are trading relevant sectors
+congress member "relevant member name" --days 90
+
+# Party-wide patterns:
+congress trades --days 30 --party D --type purchase  # Democrat buying
+congress trades --days 30 --party R --type sale      # Republican selling
+```
+
+**What to look for:**
+- **Committee members trading in their oversight areas** - e.g., Finance Committee members trading bank stocks before banking regulation
+- **Unusual volume in a sector** - Many members buying/selling the same industry
+- **Party divergence** - One party buying while another sells (may signal policy expectations)
+- **Flight to safety** - Heavy T-bill purchases might signal economic concern
+- **Timing patterns** - Trades clustered before known policy announcements
+
+**Limitations to remember:**
+- 45-day disclosure lag (trades happened ~45 days ago)
+- Amounts are ranges, not exact values
+- Spouse trades may not reflect member's knowledge
+- Not all trades are "insider" - some are routine portfolio management
 
 ## Step 4: Document Findings
 
@@ -153,6 +191,18 @@ Brief summary of what initial research found and mainstream narratives.
 |--------|------------------|-------------|-----|
 | [Source 1] | [Description] | [High/Med/Low] | [URL] |
 | [Source 2] | [Description] | [High/Med/Low] | [URL] |
+
+## Congressional Trading Analysis
+
+**Checked:** [Yes/No/Not Applicable]
+
+### Relevant Findings
+- [What Congress members are trading in related sectors]
+- [Any unusual patterns]
+- [Committee member activity in oversight areas]
+
+### Interpretation
+[What this might mean for the event - or why it's not informative]
 
 ## Key Surprises
 

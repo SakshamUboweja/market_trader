@@ -89,6 +89,12 @@ Ask yourself:
 - Who else is trading this and what do they know?
 - Is our "edge" actually just information the market has already priced in?
 
+### Congressional Trading Check
+For political and economic events, verify if congressional trading was analyzed:
+- Did the creative research check `congress` CLI data?
+- Are there any contradictory signals (e.g., thesis says bullish but Congress is selling)?
+- If not checked, consider it a gap (especially for regulatory/legislative events)
+
 ## Step 3: Identify Problems
 
 Look for:
@@ -177,6 +183,8 @@ Create a file: `research/events/<EVENT_TICKER>/YYYY-MM-DD-HHMM-senior-review.md`
 ## What The Research Missed
 
 [Blind spots, overlooked factors, unconsidered scenarios]
+
+**Congressional trading checked?** [Yes - findings noted / No - gap for political/economic events / N/A - not relevant]
 
 ## Market Efficiency Assessment
 

@@ -87,6 +87,20 @@ Use `WebSearch` to find:
 - Primary data sources
 - Other prediction market prices (Polymarket, PredictIt, Metaculus)
 
+### Congressional Trading Signal (Optional)
+
+For **economic and political events**, check if Congress members are trading in related sectors:
+
+```bash
+# For economic events - check sector trading
+congress trades --days 30 --json | jq -r '.[].display_ticker' | sort | uniq -c | sort -rn | head -10
+
+# For company/sector events - check specific tickers
+congress ticker <RELEVANT_TICKER> --days 90
+```
+
+This is a secondary signal - useful context but not primary research. Note any interesting patterns briefly.
+
 ### Form Your Probability Distribution
 
 Based on your research, estimate the probability distribution across outcomes:
